@@ -10,6 +10,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart';
@@ -248,57 +249,45 @@ class IntelligentImageEditController {
     );
   }
 
+  ///照片尺寸
+  double get size => double.parse(LocalKeyValuePair.imageSize.split('x').first);
+
   ///拍照获取图片
   void getImageFromCamera() async {
-    final size = double.parse(LocalKeyValuePair.imageSize.split('x').first);
-    final XFile? photo = await _picker.pickImage(
-      source: ImageSource.camera,
-      maxWidth: size,
-      maxHeight: size,
-      imageQuality: 100,
-    );
-    if (photo != null) {
-      final imageBytes = await photo.readAsBytes();
-      final newImage = decodeImage(imageBytes);
-      if (newImage != null) {
-        final thumbnail = copyResize(
-          newImage,
-          width: size.toInt(),
-          height: size.toInt(),
-        );
-        final imageWithAlpha = thumbnail.convert(numChannels: 4);
-        final data = encodePng(imageWithAlpha);
-        final imageName = photo.name.substring(
-          0,
-          photo.name.lastIndexOf('.'),
-        );
-        final path =
-            '${(await getTemporaryDirectory()).absolute.path}/$imageName.png';
-        File file = File(path);
-        if (await file.exists()) {
-          await file.delete(recursive: true);
-        }
-        await file.create(recursive: true);
-        await file.writeAsBytes(data);
-
-        imageMessage = '$imageName.png';
-        imagePath = file.path;
-      }
-    } else {
-      imagePath = "image is null";
+    if (Platform.isAndroid || Platform.isIOS) {
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: size,
+        maxHeight: size,
+        imageQuality: 100,
+      );
+      generatePng(photo);
     }
-    await refreshInterface?.call();
   }
 
   ///从相册中选取图片
   void getImageFromGallery() async {
-    final size = double.parse(LocalKeyValuePair.imageSize.split('x').first);
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: size,
-      maxHeight: size,
-      imageQuality: 100,
-    );
+    if (Platform.isAndroid || Platform.isIOS) {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: size,
+        maxHeight: size,
+        imageQuality: 100,
+      );
+      generatePng(image);
+    } else if (Platform.isMacOS) {
+      final XFile? file = await openFile(acceptedTypeGroups: [
+        const XTypeGroup(
+          label: 'images',
+          extensions: <String>['jpg', 'png'],
+        ),
+      ]);
+      generatePng(file);
+    }
+  }
+
+  ///生成图片
+  void generatePng(XFile? image) async {
     if (image != null) {
       final imageBytes = await image.readAsBytes();
       final newImage = decodeImage(imageBytes);

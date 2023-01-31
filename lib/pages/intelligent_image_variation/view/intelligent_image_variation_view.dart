@@ -7,6 +7,8 @@
 // brief        ai图片生成界面
 //
 
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intelligent_image_analysis/utils/index.dart';
@@ -86,8 +88,8 @@ class _IntelligentImageVariationViewState
         padding: EdgeInsets.only(
           left: 15.0,
           right: 15.0,
-          top: 3.0,
-          bottom: 5.0 + MediaQuery.of(context).padding.bottom,
+          top: 10.0,
+          bottom: 10.0 + MediaQuery.of(context).padding.bottom,
         ),
         child: Column(
           children: [
@@ -99,17 +101,20 @@ class _IntelligentImageVariationViewState
                     overflow: TextOverflow.fade,
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: controller.getImageFromCamera,
-                  child: const Text('拍照'),
-                ),
-                const SizedBox(width: 10.0),
+                if (Platform.isAndroid || Platform.isIOS)
+                  ElevatedButton(
+                    onPressed: controller.getImageFromCamera,
+                    child: const Text('拍照'),
+                  ),
+                if (Platform.isAndroid || Platform.isIOS)
+                  const SizedBox(width: 10.0),
                 ElevatedButton(
                   onPressed: controller.getImageFromGallery,
                   child: const Text('选择图片'),
                 ),
               ],
             ),
+            const SizedBox(height: 10.0),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
